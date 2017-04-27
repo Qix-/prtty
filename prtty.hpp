@@ -1076,9 +1076,9 @@ namespace prtty {
 		int bit_image_entwining;
 		int bit_image_type;
 
-		#define PRTTY_DO_STRING(name) string name;
-		#include "./prtty-strings.inc"
-		#undef PRTTY_DO_STRING
+#		define PRTTY_DO_STRING(name) string name;
+#		include "./prtty-strings.inc"
+#		undef PRTTY_DO_STRING
 	};
 
 	term get(string termname, string basePath) {
@@ -1105,8 +1105,8 @@ namespace prtty {
 		uint8_t _u8;
 		uint16_t _u16;
 
-		#define READ_U8() dbf.read((char *)&_u8, 1)
-		#define READ_U16() dbf.read((char *)&_u16, 2)
+#		define READ_U8() dbf.read((char *)&_u8, 1)
+#		define READ_U16() dbf.read((char *)&_u16, 2)
 
 		// magic number
 		READ_U16();
@@ -1169,8 +1169,8 @@ namespace prtty {
 
 		loadStrings((string *) &(result.back_tab), 394);
 
-		#undef READ_U8
-		#undef READ_U16
+#		undef READ_U8
+#		undef READ_U16
 		return result;
 	}
 

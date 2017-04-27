@@ -30,4 +30,4 @@ before_script:
 
 script:
   - cmake --build .
-  - ./prtty_tests
+  - ./prtty_tests ../test

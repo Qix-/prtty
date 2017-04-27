@@ -1,10 +1,16 @@
-#include "./prtty.hpp"
+#include "./prtty.hpp" // include first so as to not shadow errors with missing header files
+
 #include <iostream>
 
 using namespace std;
 
-int main() {
-	prtty::term term = prtty::get();
+int main(int argc, char **argv) {
+	(void) argc;
+
+	prtty::term term = argc >= 2
+		? prtty::get("xterm-256color", argv[1])
+		: prtty::get();
+
 	cout
 		<< term.clear_screen
 		<< "hello"

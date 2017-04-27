@@ -11,16 +11,17 @@
 #include <vector>
 
 namespace prtty {
-	class PrttyError : public std::runtime_error {
+	using namespace std;
+
+	class PrttyError : public runtime_error {
 	public:
 		template <typename... Args>
 		PrttyError(Args... args)
-				: std::runtime_error(args...) {
+				: runtime_error(args...) {
 		}
 	};
 
 	namespace impl {
-		using namespace std;
 
 		struct Any {
 			enum class Type {
@@ -290,9 +291,9 @@ namespace prtty {
 				virtual ~PopWriteOct() = default;
 
 				virtual void operator()(ostream &stream, Data &data) {
-					stream << std::oct;
+					stream << oct;
 					this->PopWriteInt::operator()(stream, data);
-					stream << std::dec;
+					stream << dec;
 				}
 			};
 
@@ -300,9 +301,9 @@ namespace prtty {
 				virtual ~PopWriteHex() = default;
 
 				virtual void operator()(ostream &stream, Data &data) {
-					stream << std::hex;
+					stream << hex;
 					this->PopWriteInt::operator()(stream, data);
-					stream << std::dec;
+					stream << dec;
 				}
 			};
 
@@ -310,9 +311,9 @@ namespace prtty {
 				virtual ~PopWriteUHex() = default;
 
 				virtual void operator()(ostream &stream, Data &data) {
-					stream << std::uppercase;
+					stream << uppercase;
 					this->PopWriteHex::operator()(stream, data);
-					stream << std::nouppercase;
+					stream << nouppercase;
 				}
 			};
 
@@ -358,7 +359,7 @@ namespace prtty {
 				data.session(args...);
 
 				ios::fmtflags f(stream.flags());
-				stream << std::dec;
+				stream << dec;
 				for (const auto &op : this->ops) {
 					(*op)(stream, data);
 				}

@@ -8,7 +8,4 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
 	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Weverything")
 endif ()
 
-# we disable this warning since it causes a false-positive in the default case of the sequence parser for if c==0 (which can definitely occur)
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unreachable-code")
-
 add_executable (prtty_tests test.cc)

@@ -789,9 +789,9 @@ namespace prtty {
 								throw prtty::PrttyError("push argument escape (%p) must be followed by a number between 1-9 (inclusive): %p" + string(1, c));
 							}
 
-							arg = c - '1';
+							arg = c - '0';
 							seq.nargs = seq.nargs > arg ? seq.nargs : arg;
-							seq.ops.push_back(mkunique<op::PushArg>(arg));
+							seq.ops.push_back(mkunique<op::PushArg>(arg - 1));
 							break;
 						case 'P':
 							c = fmt[++i];
@@ -928,10 +928,16 @@ namespace prtty {
 									int *target = usePrecision ? &precision : &width;
 									*target = 0;
 
-									for (; i < len && c >= '0' && c <= '9'; i++) {
+									// this is some gross logic. might be nice to figure out
+									// a better way to do this.
+									for (; i < len && (c = fmt[i]) >= '0' && c <= '9'; i++) {
 										c = fmt[i];
 										*target *= 10;
 										*target += c - '0';
+
+										if ((c = fmt[i + 1]) < '0' || c > '9') {
+											break;
+										}
 									}
 
 									continue;

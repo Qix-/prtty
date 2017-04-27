@@ -60,6 +60,14 @@ namespace prtty {
 				int tint;
 				char tchar;
 			};
+
+			string toString() const {
+				switch (this->type) {
+				case Type::STRING: return "\"" + string(this->tstring) + "\"";
+				case Type::INT: return to_string(this->tint);
+				case Type::CHAR: return "'" + string(1, this->tchar) + "'";
+				}
+			}
 		};
 
 		struct Data {
@@ -449,6 +457,158 @@ namespace prtty {
 					return true;
 				}
 			};
+
+#			define BinOp(name, verb, operand) struct name : public Operation { \
+				virtual ~name() = default; \
+				\
+				virtual void operator()(ostream &stream, Data &data, OpItr &citr, OpItr &cend) { \
+					(void) stream; \
+					(void) citr; \
+					(void) cend; \
+					\
+					Any &rop = data.stk.top(); \
+					data.stk.pop(); \
+					Any &lop = data.stk.top(); \
+					data.stk.pop(); \
+					\
+					int result = 0; \
+					\
+					switch (lop.type) { \
+					case Any::Type::INT: \
+						result = lop.tint; \
+						break; \
+					case Any::Type::CHAR: \
+						result = lop.tchar; \
+						break; \
+					case Any::Type::STRING: \
+					nostrings: \
+						throw prtty::PrttyError("cannot " verb " a string operand: " + lop.toString() + " " #operand " " + rop.toString()); \
+					} \
+					\
+					switch (rop.type) { \
+					case Any::Type::INT: \
+						result = result operand rop.tint; \
+						break; \
+					case Any::Type::CHAR: \
+						result = result operand rop.tchar; \
+						break; \
+					case Any::Type::STRING: \
+						goto nostrings; \
+					} \
+					\
+					data.stk.push(result); \
+				} \
+			}
+
+			BinOp(ArithAdd, "add", +);
+			BinOp(ArithSub, "subtract", -);
+			BinOp(ArithMul, "multiply", *);
+			BinOp(ArithDiv, "divide", /);
+			BinOp(ArithMod, "modulo (find the remainder of)", %);
+
+			BinOp(BitOr, "bitwise-or", |);
+			BinOp(BitAnd, "bitwise-and", &);
+			BinOp(BitXor, "bitwise-xor", ^);
+
+			BinOp(BoolGt, "perform greater-than conditionals on", >);
+			BinOp(BoolLt, "perform less-than conditionals on", <);
+			BinOp(BoolAnd, "perform boolean-and conditionals on", &&);
+			BinOp(BoolOr, "perform boolean-or conditionals on", ||);
+
+			struct BoolEq : public Operation {
+				virtual ~BoolEq() = default;
+
+				virtual void operator()(ostream &stream, Data &data, OpItr &citr, OpItr &cend) {
+					(void) stream;
+					(void) citr;
+					(void) cend;
+
+					Any &rop = data.stk.top();
+					data.stk.pop();
+					Any &lop = data.stk.top();
+					data.stk.pop();
+
+					int result = 0;
+
+					switch (lop.type) {
+					case Any::Type::INT:
+						result = lop.tint;
+						break;
+					case Any::Type::CHAR:
+						result = lop.tchar;
+						break;
+					case Any::Type::STRING:
+						if (rop.type != Any::Type::STRING) {
+							throw prtty::PrttyError("cannot determine equality of mixed string/integral operands: " + lop.toString() + " == " + rop.toString());
+						}
+					}
+
+					switch (rop.type) {
+					case Any::Type::INT:
+						result = result == rop.tint;
+						break;
+					case Any::Type::CHAR:
+						result = result == rop.tchar;
+						break;
+					case Any::Type::STRING:
+						result = strcmp(lop.tstring, rop.tstring) == 0;
+						break;
+					}
+
+					data.stk.push(result);
+				}
+			};
+
+			struct BoolNot : public Operation {
+				virtual ~BoolNot() = default;
+
+				virtual void operator()(ostream &stream, Data &data, OpItr &citr, OpItr &cend) {
+					(void) stream;
+					(void) citr;
+					(void) cend;
+
+					Any &val = data.stk.top();
+					data.stk.pop();
+
+					switch (val.type) {
+					case Any::Type::INT:
+						data.stk.push(val.tint == 0);
+						break;
+					case Any::Type::CHAR:
+						data.stk.push(val.tchar == '\0');
+						break;
+					case Any::Type::STRING:
+						// ehh.. this is kind of an 'extension'
+						data.stk.push(val.tstring[0] == '\0');
+						break;
+					}
+				}
+			};
+
+			struct BitNegate : public Operation {
+				virtual ~BitNegate() = default;
+
+				virtual void operator()(ostream &stream, Data &data, OpItr &citr, OpItr &cend) {
+					(void) stream;
+					(void) citr;
+					(void) cend;
+
+					Any &val = data.stk.top();
+					data.stk.pop();
+
+					switch (val.type) {
+					case Any::Type::INT:
+						data.stk.push(~val.tint);
+						break;
+					case Any::Type::CHAR:
+						data.stk.push(~val.tchar);
+						break;
+					case Any::Type::STRING:
+						throw prtty::PrttyError("cannot bitwise negate a string: ~" + val.toString());
+						break;
+					}
+				}
+			};
 		}
 
 		template <typename T, typename... Args>
@@ -593,6 +753,51 @@ namespace prtty {
 							break;
 						case ';':
 							seq.ops.push_back(mkunique<op::CondEnd>());
+							break;
+						case '+':
+							seq.ops.push_back(mkunique<op::ArithAdd>());
+							break;
+						case '-':
+							seq.ops.push_back(mkunique<op::ArithSub>());
+							break;
+						case '*':
+							seq.ops.push_back(mkunique<op::ArithMul>());
+							break;
+						case '/':
+							seq.ops.push_back(mkunique<op::ArithDiv>());
+							break;
+						case 'm':
+							seq.ops.push_back(mkunique<op::ArithMod>());
+							break;
+						case '&':
+							seq.ops.push_back(mkunique<op::BitAnd>());
+							break;
+						case '|':
+							seq.ops.push_back(mkunique<op::BitOr>());
+							break;
+						case '^':
+							seq.ops.push_back(mkunique<op::BitXor>());
+							break;
+						case '=':
+							seq.ops.push_back(mkunique<op::BoolEq>());
+							break;
+						case '>':
+							seq.ops.push_back(mkunique<op::BoolGt>());
+							break;
+						case '<':
+							seq.ops.push_back(mkunique<op::BoolLt>());
+							break;
+						case 'A':
+							seq.ops.push_back(mkunique<op::BoolAnd>());
+							break;
+						case 'O':
+							seq.ops.push_back(mkunique<op::BoolOr>());
+							break;
+						case '!':
+							seq.ops.push_back(mkunique<op::BoolNot>());
+							break;
+						case '~':
+							seq.ops.push_back(mkunique<op::BitNegate>());
 							break;
 						default:
 							throw prtty::PrttyError("invalid escape: %" + (c == 0 ? string("<EOF>") : string(1, c)));

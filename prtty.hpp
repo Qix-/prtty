@@ -728,12 +728,19 @@ namespace prtty {
 
 			static Sequence parse(const string fmt) {
 				Sequence seq;
-				seq.nargs = 0;
+
 				size_t len = fmt.length();
+				if (len == 0) {
+					return seq;
+				}
+
+				seq.nargs = 0;
+
 				unique_ptr<char[]> literal(new char[len]);
 				char lc = 0;
 				char c = 0;
 				int arg = 0;
+
 				for (size_t i = 0; i < len; i++) {
 					c = fmt[i];
 
@@ -749,7 +756,7 @@ namespace prtty {
 							lc = 0;
 						}
 
-						if (c >= '0' || c <= '9') {
+						if (c >= '0' && c <= '9') {
 							goto fieldParse;
 						}
 
@@ -938,19 +945,19 @@ namespace prtty {
 								case '.': usePrecision = true; break;
 								case 's':
 									seq.ops.push_back(mkunique<op::PopWriteString>(left, width, precision));
-									break;
+									goto afterFieldParse;
 								case 'd':
 									seq.ops.push_back(mkunique<op::PopWriteInt>(left, width, sign));
-									break;
+									goto afterFieldParse;
 								case 'x':
 									seq.ops.push_back(mkunique<op::PopWriteHex>(left, width, sign, exmode));
-									break;
+									goto afterFieldParse;
 								case 'X':
 									seq.ops.push_back(mkunique<op::PopWriteUHex>(left, width, sign, exmode));
-									break;
+									goto afterFieldParse;
 								case 'o':
 									seq.ops.push_back(mkunique<op::PopWriteOct>(left, width, sign, exmode));
-									break;
+									goto afterFieldParse;
 								}
 							}
 						}

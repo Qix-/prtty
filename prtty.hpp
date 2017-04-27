@@ -607,6 +607,8 @@ namespace prtty {
 			BinOp(BoolAnd, "perform boolean-and conditionals on", &&);
 			BinOp(BoolOr, "perform boolean-or conditionals on", ||);
 
+#			undef BinOp
+
 			struct BoolEq : public Operation {
 				virtual ~BoolEq() = default;
 

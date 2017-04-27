@@ -36,7 +36,7 @@ int main() {
 	cout << "this terminal " << (term.over_strike ? "can" : "cannot") << " overstrike." << endl;
 	cout << endl;
 
-	// when it comes to string values, prtty implements the Terminfo scripting language fully,
+	// when it comes to string values, prtty implements the Terminfo scripting language,
 	// and thus all string values are both stream manipulators as well as functions.
 	cout << "hello";
 	cout << term.column_address(); // arguments default to int(0)

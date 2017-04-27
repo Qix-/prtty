@@ -112,7 +112,7 @@ namespace prtty {
 
 
 		struct Operation {
-			typedef vector<unique_ptr<Operation>>::const_iterator OpItr;
+			typedef vector<shared_ptr<Operation>>::const_iterator OpItr;
 
 			virtual ~Operation() = default;
 
@@ -711,13 +711,20 @@ namespace prtty {
 		}
 
 		template <typename T, typename... Args>
-		unique_ptr<T> mkunique(Args... args) {
-			return unique_ptr<T>(new T(args...));
+		shared_ptr<T> mkunique(Args... args) {
+			return shared_ptr<T>(new T(args...));
 		}
 
 		struct Sequence {
+			Sequence() = default;
+
+			Sequence(const Sequence &other)
+					: nargs(other.nargs)
+					, ops(other.ops) {
+			}
+
 			template <typename... Args>
-			void operator ()(Data &data, ostream &stream, Args... args) {
+			void operator ()(Data &data, ostream &stream, Args... args) const {
 				data.session(args...);
 
 				ios::fmtflags f(stream.flags());
@@ -731,7 +738,7 @@ namespace prtty {
 			}
 
 			int nargs;
-			vector<unique_ptr<Operation>> ops;
+			vector<shared_ptr<Operation>> ops;
 
 			static Sequence parse(const string fmt) {
 				Sequence seq;
@@ -1023,14 +1030,14 @@ namespace prtty {
 			}
 
 			template <typename... Args>
-			function<ostream&(ostream&)> operator()(Args... args) {
+			function<ostream&(ostream&)> operator()(Args... args) const {
 				return [this, &args...](ostream &stream) -> ostream & {
 					this->seq(this->data, stream, args...);
 					return stream;
 				};
 			}
 
-			ostream & operator()(ostream &stream) {
+			ostream & operator()(ostream &stream) const {
 				this->seq(this->data, stream);
 				return stream;
 			}
@@ -1126,7 +1133,7 @@ namespace prtty {
 		int bit_image_entwining;
 		int bit_image_type;
 
-#		define PRTTY_DO_STRING(name) impl::SequenceStreamer name;
+#		define PRTTY_DO_STRING(name) const impl::SequenceStreamer name;
 #		include "./prtty-strings.inc"
 #		undef PRTTY_DO_STRING
 
@@ -1221,13 +1228,13 @@ namespace prtty {
 			return string(&buf[0]);
 		};
 
-		auto loadStrings = [&](string *start, size_t num) {
+		auto loadSequences = [&](impl::SequenceStreamer *start, size_t num) {
 			for (size_t i = 0; i < num; i++) {
 				start[i] = loadString();
 			}
 		};
 
-		loadStrings((string *) &(result.back_tab), 394);
+		loadSequences((impl::SequenceStreamer *) &(result.back_tab), 394);
 
 #		undef READ_U8
 #		undef READ_U16

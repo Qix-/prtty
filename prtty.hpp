@@ -2,9 +2,16 @@
 #define PRTTY_H__
 #pragma once
 
+/*
+	Please note that this library does NOT support
+	delays (millisecond delays). Please, stop using
+	outdated technology and let's move on.
+*/
+
 #include <cstdint>
 #include <cstring>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -276,82 +283,167 @@ namespace prtty {
 			};
 
 			struct PopWriteString : public Operation {
+				bool left;
+				int width;
+				int precision;
+
+				PopWriteString(bool left=false, int width=-1, int precision=-1)
+						: left(left)
+						, width(width)
+						, precision(precision) {
+				}
+
 				virtual ~PopWriteString() = default;
 
 				virtual void operator()(ostream &stream, Data &data, OpItr &citr, OpItr &cend) {
 					(void) citr;
 					(void) cend;
+
 					Any &v = data.stk.top();
+					string result;
+
 					switch (v.type) {
 					case Any::Type::INT:
-						stream << to_string(v.tint);
+						result = to_string(v.tint);
 						break;
 					case Any::Type::CHAR:
-						stream << string(1, v.tchar);
+						result = string(1, v.tchar);
 						break;
 					case Any::Type::STRING:
-						stream << string(v.tstring);
+						result = string(v.tstring);
 						break;
 					}
 					data.stk.pop();
+
+					if (this->precision > -1) {
+						result = result.substr(0, this->precision);
+					}
+
+					ios::fmtflags f(stream.flags());
+
+					if (this->width > -1) {
+						stream << std::setw(this->width);
+					}
+					if (this->left) {
+						stream << std::left;
+					}
+
+					stream << result;
+					stream.flags(f);
 				}
 			};
 
 			struct PopWriteInt : public Operation {
+				bool left;
+				int width;
+				bool sign;
+
+				PopWriteInt(bool left=false, int width=-1, bool sign=false)
+						: left(left)
+						, width(width)
+						, sign(sign) {
+				}
+
 				virtual ~PopWriteInt() = default;
 
 				virtual void operator()(ostream &stream, Data &data, OpItr &citr, OpItr &cend) {
 					(void) citr;
 					(void) cend;
+
 					Any &v = data.stk.top();
+
+					ios::fmtflags f(stream.flags());
+
+					if (this->width > -1) {
+						stream << std::setw(this->width);
+					}
+					if (this->left) {
+						stream << std::left;
+					}
+					if (this->sign) {
+						stream << std::showpos;
+					}
+
 					switch (v.type) {
 					case Any::Type::INT:
-						stream << to_string(v.tint);
+						stream << v.tint;
 						break;
 					case Any::Type::CHAR:
-						stream << to_string((int) v.tchar);
+						stream << (int) v.tchar;
 						break;
 					case Any::Type::STRING:
-						stream << to_string(0);
+						stream << 0;
 						break;
 					}
 					data.stk.pop();
+
+					stream.flags(f);
 				}
 			};
 
 			struct PopWriteOct : public PopWriteInt {
+				bool exmode;
+
+				PopWriteOct(bool left=false, int width=-1, bool sign=false, bool exmode=false)
+						: PopWriteInt(left, width, sign)
+						, exmode(exmode) {
+				}
+
 				virtual ~PopWriteOct() = default;
 
 				virtual void operator()(ostream &stream, Data &data, OpItr &citr, OpItr &cend) {
 					(void) citr;
 					(void) cend;
+
+					ios::fmtflags f(stream.flags());
 					stream << oct;
+					if (this->exmode) {
+						stream << std::showbase;
+					}
 					this->PopWriteInt::operator()(stream, data, citr, cend);
-					stream << dec;
+					stream.flags(f);
 				}
 			};
 
 			struct PopWriteHex : public PopWriteInt {
+				bool exmode;
+
+				PopWriteHex(bool left=false, int width=-1, bool sign=false, bool exmode=false)
+						: PopWriteInt(left, width, sign)
+						, exmode(exmode) {
+				}
+
 				virtual ~PopWriteHex() = default;
 
 				virtual void operator()(ostream &stream, Data &data, OpItr &citr, OpItr &cend) {
 					(void) citr;
 					(void) cend;
+
+					ios::fmtflags f(stream.flags());
 					stream << hex;
+					if (this->exmode) {
+						stream << std::showbase;
+					}
 					this->PopWriteInt::operator()(stream, data, citr, cend);
-					stream << dec;
+					stream.flags(f);
 				}
 			};
 
 			struct PopWriteUHex : public PopWriteHex {
+				PopWriteUHex(bool left=false, int width=-1, bool sign=false, bool exmode=false)
+						: PopWriteHex(left, width, sign, exmode) {
+				}
+
 				virtual ~PopWriteUHex() = default;
 
 				virtual void operator()(ostream &stream, Data &data, OpItr &citr, OpItr &cend) {
 					(void) citr;
 					(void) cend;
+
+					ios::fmtflags f(stream.flags());
 					stream << uppercase;
 					this->PopWriteHex::operator()(stream, data, citr, cend);
-					stream << nouppercase;
+					stream.flags(f);
 				}
 			};
 
@@ -657,7 +749,15 @@ namespace prtty {
 							lc = 0;
 						}
 
+						if (c >= '0' || c <= '9') {
+							goto fieldParse;
+						}
+
 						switch (c) {
+						case ':':
+						case '#':
+						case '.':
+							goto fieldParse;
 						case 'c':
 							seq.ops.push_back(mkunique<op::PopWriteChar>());
 							break;
@@ -802,6 +902,60 @@ namespace prtty {
 						default:
 							throw prtty::PrttyError("invalid escape: %" + (c == 0 ? string("<EOF>") : string(1, c)));
 						}
+
+						goto afterFieldParse;
+					fieldParse:
+						{
+							bool exmode = false;
+							bool sign = false;
+							bool left = false;
+							int width = -1;
+							bool usePrecision = false;
+							int precision = -1;
+
+							// parses extended flag notation for field width/precision
+							for (; i < len; i++) {
+								c = fmt[i];
+
+								if (c >= '0' && c <= '9') {
+									int *target = usePrecision ? &precision : &width;
+									*target = 0;
+
+									for (; i < len && c >= '0' && c <= '9'; i++) {
+										c = fmt[i];
+										*target *= 10;
+										*target += c - '0';
+									}
+
+									continue;
+								}
+
+								switch (c) {
+								case ':': continue;
+								case '-': left = true; break;
+								case '+': sign = true; break;
+								case '#': exmode = true; break;
+								case '.': usePrecision = true; break;
+								case 's':
+									seq.ops.push_back(mkunique<op::PopWriteString>(left, width, precision));
+									break;
+								case 'd':
+									seq.ops.push_back(mkunique<op::PopWriteInt>(left, width, sign));
+									break;
+								case 'x':
+									seq.ops.push_back(mkunique<op::PopWriteHex>(left, width, sign, exmode));
+									break;
+								case 'X':
+									seq.ops.push_back(mkunique<op::PopWriteUHex>(left, width, sign, exmode));
+									break;
+								case 'o':
+									seq.ops.push_back(mkunique<op::PopWriteOct>(left, width, sign, exmode));
+									break;
+								}
+							}
+						}
+
+					afterFieldParse: (void)0;
 					} else {
 					addLiteral:
 						literal[lc++] = c;

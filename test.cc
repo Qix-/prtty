@@ -17,5 +17,6 @@ int main() {
 	cout << "has clear screen: " << bool(term.clear_screen) << endl; // usually true
 	cout << "has set a (ANSI) foreground: " << bool(term.set_a_foreground) << endl; // true on color terminals
 	cout << endl << "colors: " << term.max_colors << endl;
+
 	return 0;
 }

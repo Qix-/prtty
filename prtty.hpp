@@ -704,7 +704,6 @@ namespace prtty {
 						break;
 					case Any::Type::STRING:
 						throw prtty::PrttyError("cannot bitwise negate a string: ~" + val.toString());
-						break;
 					}
 				}
 			};
@@ -1269,7 +1268,8 @@ namespace prtty {
 	}
 
 	term get(string termname) {
-		return get(termname, "/usr/share/terminfo");
+		char *termdb = getenv("TERMINFO");
+		return get(termname, termdb ? termdb : "/usr/share/terminfo");
 	}
 
 	term get() {

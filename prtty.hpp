@@ -1015,13 +1015,31 @@ namespace prtty {
 
 		class SequenceStreamer {
 			friend prtty::term prtty::get(string termname, string basePath);
+
+			class SeqStreamDeferredCall {
+				friend SequenceStreamer;
+			public:
+				SeqStreamDeferredCall(const SeqStreamDeferredCall &other) = default;
+
+			private:
+				SeqStreamDeferredCall(function<ostream&(ostream&)> callback)
+						: callback(callback) {
+				}
+
+				friend ostream & operator <<(ostream &stream, const SeqStreamDeferredCall &defcall) {
+					return defcall.callback(stream);
+				}
+
+				function<ostream&(ostream&)> callback;
+			};
+
 		public:
 			SequenceStreamer(Data &data)
 					: isset(false)
 					, data(data) {
 			}
 
-			operator bool() const throw() {
+			explicit operator bool() const throw() {
 				return this->isset;
 			}
 
@@ -1030,25 +1048,26 @@ namespace prtty {
 			}
 
 			template <typename... Args>
-			function<ostream&(ostream&)> operator()(Args... args) const {
-				return [this, &args...](ostream &stream) -> ostream & {
+			SeqStreamDeferredCall operator()(Args... args) const {
+				return function<ostream&(ostream&)>([this, &args...](ostream &stream) -> ostream & {
 					this->seq(this->data, stream, args...);
 					return stream;
-				};
-			}
-
-			ostream & operator()(ostream &stream) const {
-				this->seq(this->data, stream);
-				return stream;
+				});
 			}
 
 		private:
+			friend ostream & operator <<(ostream &stream, const SequenceStreamer &seqstream) {
+				seqstream.seq(seqstream.data, stream);
+				return stream;
+			}
+
 			void operator =(const string &seqstr) {
 				if (seqstr.empty()) {
 					return;
 				}
 
 				this->seq = Sequence::parse(seqstr);
+				this->isset = true;
 			}
 
 			bool isset;

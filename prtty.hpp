@@ -23,6 +23,9 @@
 namespace prtty {
 	using namespace std;
 
+	struct term;
+	term get(string termname, string basePath);
+
 	class PrttyError : public runtime_error {
 	public:
 		template <typename... Args>
@@ -105,6 +108,8 @@ namespace prtty {
 
 			vector<Any> sparm;
 		};
+
+
 
 		struct Operation {
 			typedef vector<unique_ptr<Operation>>::const_iterator OpItr;
@@ -1000,6 +1005,49 @@ namespace prtty {
 				elems.push_back(item);
 			}
 		}
+
+		class SequenceStreamer {
+			friend prtty::term prtty::get(string termname, string basePath);
+		public:
+			SequenceStreamer(Data &data)
+					: isset(false)
+					, data(data) {
+			}
+
+			operator bool() const throw() {
+				return this->isset;
+			}
+
+			bool operator !() const throw() {
+				return !this->isset;
+			}
+
+			template <typename... Args>
+			function<ostream&(ostream&)> operator()(Args... args) {
+				return [this, &args...](ostream &stream) -> ostream & {
+					this->seq(this->data, stream, args...);
+					return stream;
+				};
+			}
+
+			ostream & operator()(ostream &stream) {
+				this->seq(this->data, stream);
+				return stream;
+			}
+
+		private:
+			void operator =(const string &seqstr) {
+				if (seqstr.empty()) {
+					return;
+				}
+
+				this->seq = Sequence::parse(seqstr);
+			}
+
+			bool isset;
+			Data &data;
+			Sequence seq;
+		};
 	}
 
 	struct term {
@@ -1078,9 +1126,19 @@ namespace prtty {
 		int bit_image_entwining;
 		int bit_image_type;
 
-#		define PRTTY_DO_STRING(name) string name;
+#		define PRTTY_DO_STRING(name) impl::SequenceStreamer name;
 #		include "./prtty-strings.inc"
 #		undef PRTTY_DO_STRING
+
+		term() :
+#		define PRTTY_DO_STRING(name) name(this->data),
+#		define PRTTY_DO_LAST_STRING(name) name(this->data)
+#		include "./prtty-strings.inc"
+#		undef PRTTY_DO_STRING
+		{}
+
+	private:
+		impl::Data data;
 	};
 
 	term get(string termname, string basePath) {

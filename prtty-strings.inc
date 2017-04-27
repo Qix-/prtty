@@ -1,4 +1,11 @@
-PRTTY_DO_STRING(back_tab)
+#ifndef PRTTY_DO_FIRST_STRING
+#	define PRTTY_DO_FIRST_STRING PRTTY_DO_STRING
+#endif
+#ifndef PRTTY_DO_LAST_STRING
+#	define PRTTY_DO_LAST_STRING PRTTY_DO_STRING
+#endif
+
+PRTTY_DO_FIRST_STRING(back_tab)
 PRTTY_DO_STRING(bell)
 PRTTY_DO_STRING(carriage_return)
 PRTTY_DO_STRING(change_scroll_region)
@@ -391,4 +398,7 @@ PRTTY_DO_STRING(enter_right_hl_mode)
 PRTTY_DO_STRING(enter_top_hl_mode)
 PRTTY_DO_STRING(enter_vertical_hl_mode)
 PRTTY_DO_STRING(set_a_attributes)
-PRTTY_DO_STRING(set_pglen_inch)
+PRTTY_DO_LAST_STRING(set_pglen_inch)
+
+#undef PRTTY_DO_FIRST_STRING
+#undef PRTTY_DO_LAST_STRING

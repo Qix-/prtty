@@ -8,6 +8,14 @@ values.
 
 ## Usage
 
+prTTY provides a `term` object that holds all of the boolean, numeric, and string&ast; "capabilities"
+for the given terminal as properties using their long names.
+
+A list of capabilities with their descriptions and expected arguments can be found
+[in this Gist](https://gist.github.com/rwboyer/1691527#file-openbsd-terminfo-L106-L588).
+
+You can also find it in most distributions' man page for `terminfo(5)`.
+
 ```c++
 #include <iostream>
 #include "prtty.hpp"
@@ -15,14 +23,17 @@ values.
 using namespace std;
 
 int main() {
-	// get the current terminal
+	// get the current terminal (using $TERM) or maually specify the name.
 	prtty::term term = prtty::get();
-	// or, to specify a terminal name manually:
 	prtty::term term = prtty::get("screen-256color");
+
+	// you can also specify the base search path, though this usually isn't necessary.
+	prtty::term term = prtty::get("screen-256color", "/path/to/termdb");
 
 	cout << "selected terminal: " << term.id << endl;
 	if (!term.names.empty()) {
 		cout << "also known as:" << endl;
+
 		for (auto &name : term.names) {
 			cout << "\t- " << name << endl;
 		}
@@ -30,14 +41,16 @@ int main() {
 	cout << endl;
 
 	// then refer to man terminfo(5) for values.
-	// prtty uses the long-form value names.
-	// ref: https://gist.github.com/rwboyer/1691527#file-openbsd-terminfo-L106-L588
+	//
+	// prtty uses the long-form capability names as properties.
 	cout << "this terminal supports up to " << term.max_colors << " colors." << endl;
 	cout << "this terminal " << (term.over_strike ? "can" : "cannot") << " overstrike." << endl;
 	cout << endl;
 
 	// when it comes to string values, prtty implements the Terminfo scripting language,
 	// and thus all string values are both stream manipulators as well as functions.
+	//
+	// the following outputs "jello is tasty!"
 	cout << "hello";
 	cout << term.column_address(); // arguments default to int(0)
 	cout << "j";

@@ -1077,8 +1077,8 @@ namespace prtty {
 	}
 
 	struct term {
-		string id;
-		vector<string> names;
+		const string id;
+		const vector<string> names;
 
 		bool auto_left_margin;
 		bool auto_right_margin;
@@ -1156,9 +1156,10 @@ namespace prtty {
 #		include "./prtty-strings.inc"
 #		undef PRTTY_DO_STRING
 
-		term() :
-#		define PRTTY_DO_STRING(name) name(this->data),
-#		define PRTTY_DO_LAST_STRING(name) name(this->data)
+		term(string id, vector<string> &names)
+				: id(id)
+				, names(names)
+#		define PRTTY_DO_STRING(name) , name(this->data)
 #		include "./prtty-strings.inc"
 #		undef PRTTY_DO_STRING
 		{}
@@ -1185,9 +1186,6 @@ namespace prtty {
 			}
 		}
 
-		term result;
-		result.id = termname;
-
 		uint8_t _u8;
 		uint16_t _u16;
 
@@ -1211,9 +1209,13 @@ namespace prtty {
 		READ_U16();
 		// size_t strSize = _u16;
 
+		vector<string> names;
+
 		unique_ptr<char[]> fullNameStr(new char[nameSize]);
 		dbf.read(fullNameStr.get(), nameSize);
-		impl::split(string(fullNameStr.get(), nameSize - 1), '|', result.names);
+		impl::split(string(fullNameStr.get(), nameSize - 1), '|', names);
+
+		term result(termname, names);
 
 		bool *bools = (bool *) &(result.auto_left_margin);
 		for (size_t i = 0; i < boolSize; i++) {

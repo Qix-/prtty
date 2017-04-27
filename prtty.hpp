@@ -1,5 +1,5 @@
-#ifndef PRTTY_H__
-#define PRTTY_H__
+#ifndef PRTTY_H
+#define PRTTY_H
 #pragma once
 
 /*
@@ -171,13 +171,13 @@ namespace prtty {
 					Any &v = data.stk.top();
 					switch (v.type) {
 					case Any::Type::INT:
-						len = to_string(v.tint).length();
+						len = static_cast<int>(to_string(v.tint).length());
 						break;
 					case Any::Type::CHAR:
 						len = 1;
 						break;
 					case Any::Type::STRING:
-						len = ::strlen(v.tstring);
+						len = static_cast<int>(::strlen(v.tstring));
 						break;
 					}
 					data.stk.pop();
@@ -321,7 +321,7 @@ namespace prtty {
 					data.stk.pop();
 
 					if (this->precision > -1) {
-						result = result.substr(0, this->precision);
+						result = result.substr(0, static_cast<size_t>(this->precision));
 					}
 
 					ios::fmtflags f(stream.flags());
@@ -374,7 +374,7 @@ namespace prtty {
 						stream << v.tint;
 						break;
 					case Any::Type::CHAR:
-						stream << (int) v.tchar;
+						stream << static_cast<int>(v.tchar);
 						break;
 					case Any::Type::STRING:
 						stream << 0;
@@ -461,7 +461,7 @@ namespace prtty {
 					Any &v = data.stk.top();
 					switch (v.type) {
 					case Any::Type::INT:
-						stream << string(1, (char) (v.tint & 0xFF));
+						stream << string(1, static_cast<char>(v.tint & 0xFF));
 						break;
 					case Any::Type::CHAR:
 						stream << string(1, v.tchar);
@@ -723,6 +723,12 @@ namespace prtty {
 					, ops(other.ops) {
 			}
 
+			Sequence & operator =(const Sequence &other) {
+				this->nargs = other.nargs;
+				this->ops = other.ops;
+				return *this;
+			}
+
 			template <typename... Args>
 			void operator ()(Data &data, ostream &stream, Args... args) const {
 				data.session(args...);
@@ -751,7 +757,7 @@ namespace prtty {
 				seq.nargs = 0;
 
 				unique_ptr<char[]> literal(new char[len]);
-				char lc = 0;
+				size_t lc = 0;
 				char c = 0;
 				int arg = 0;
 
@@ -765,7 +771,7 @@ namespace prtty {
 							goto addLiteral;
 						}
 
-						if (lc) {
+						if (lc > 0) {
 							seq.ops.push_back(mkunique<op::StringLiteral>(string(literal.get(), lc)));
 							lc = 0;
 						}
@@ -805,14 +811,14 @@ namespace prtty {
 
 							arg = c - '0';
 							seq.nargs = seq.nargs > arg ? seq.nargs : arg;
-							seq.ops.push_back(mkunique<op::PushArg>(arg - 1));
+							seq.ops.push_back(mkunique<op::PushArg>(static_cast<unsigned int>(arg - 1)));
 							break;
 						case 'P':
 							c = fmt[++i];
 							if (c >= 'a' && c<= 'z') {
-								seq.ops.push_back(mkunique<op::PopSetDynamic>(c - 'a'));
+								seq.ops.push_back(mkunique<op::PopSetDynamic>(static_cast<unsigned int>(c - 'a')));
 							} else if (c >= 'A' && c <= 'Z') {
-								seq.ops.push_back(mkunique<op::PopSetStatic>(c - 'A'));
+								seq.ops.push_back(mkunique<op::PopSetStatic>(static_cast<unsigned int>(c - 'A')));
 							} else {
 								throw prtty::PrttyError("set dynamic/static variable escape (%P) must be followed by a character within a-Z or A-Z: %P" + string(1, c));
 							}
@@ -820,9 +826,9 @@ namespace prtty {
 						case 'g':
 							c = fmt[++i];
 							if (c >= 'a' && c<= 'z') {
-								seq.ops.push_back(mkunique<op::PushDynamic>(c - 'a'));
+								seq.ops.push_back(mkunique<op::PushDynamic>(static_cast<unsigned int>(c - 'a')));
 							} else if (c >= 'A' && c <= 'Z') {
-								seq.ops.push_back(mkunique<op::PushStatic>(c - 'A'));
+								seq.ops.push_back(mkunique<op::PushStatic>(static_cast<unsigned int>(c - 'A')));
 							} else {
 								throw prtty::PrttyError("get dynamic/static variable escape (%g) must be followed by a character within a-Z or A-Z: %P" + string(1, c));
 							}
@@ -989,7 +995,7 @@ namespace prtty {
 					}
 				}
 
-				if (lc) {
+				if (lc > 0) {
 					seq.ops.push_back(mkunique<op::StringLiteral>(string(literal.get(), lc)));
 				}
 
@@ -997,7 +1003,7 @@ namespace prtty {
 			}
 		};
 
-		inline char hashCharacter(unsigned char c) {
+		inline char hashCharacter(char c) {
 			if (c < 10) {
 				return c + '0';
 			} else {
@@ -1039,11 +1045,11 @@ namespace prtty {
 					, data(data) {
 			}
 
-			explicit operator bool() const throw() {
+			explicit operator bool() const noexcept(true) {
 				return this->isset;
 			}
 
-			bool operator !() const throw() {
+			bool operator !() const noexcept(true) {
 				return !this->isset;
 			}
 
@@ -1174,7 +1180,7 @@ namespace prtty {
 		dbf.open(dbPath, ios::binary);
 		if (!dbf) {
 			char hash[2];
-			unsigned char firstchar = termname[0];
+			char firstchar = termname[0];
 			hash[0] = impl::hashCharacter((firstchar & 0xF0) >> 4);
 			hash[1] = impl::hashCharacter(firstchar & 0x0F);
 
@@ -1189,8 +1195,8 @@ namespace prtty {
 		uint8_t _u8;
 		uint16_t _u16;
 
-#		define READ_U8() dbf.read((char *)&_u8, 1)
-#		define READ_U16() dbf.read((char *)&_u16, 2)
+#		define READ_U8() dbf.read(reinterpret_cast<char *>(&_u8), 1)
+#		define READ_U16() dbf.read(reinterpret_cast<char *>(&_u16), 2)
 
 		// magic number
 		READ_U16();
@@ -1212,15 +1218,15 @@ namespace prtty {
 		vector<string> names;
 
 		unique_ptr<char[]> fullNameStr(new char[nameSize]);
-		dbf.read(fullNameStr.get(), nameSize);
+		dbf.read(fullNameStr.get(), static_cast<streamsize>(nameSize));
 		impl::split(string(fullNameStr.get(), nameSize - 1), '|', names);
 
 		term result(termname, names);
 
-		bool *bools = (bool *) &(result.auto_left_margin);
+		bool *bools = reinterpret_cast<bool *>(&(result.auto_left_margin));
 		for (size_t i = 0; i < boolSize; i++) {
 			READ_U8();
-			bools[i] = (bool) _u8;
+			bools[i] = static_cast<bool>(_u8);
 		}
 
 		// align to short
@@ -1228,10 +1234,10 @@ namespace prtty {
 			dbf.ignore(1);
 		}
 
-		int *ints = (int *) &(result.columns);
+		int *ints = reinterpret_cast<int *>(&(result.columns));
 		for (size_t i = 0; i < numCount; i++) {
 			READ_U16();
-			ints[i] = (int) _u16;
+			ints[i] = static_cast<bool>(_u16);
 		}
 
 		char buf[4096];
@@ -1239,11 +1245,11 @@ namespace prtty {
 		auto loadString = [&dbf, &offset, &_u16, &buf]() -> string {
 			READ_U16();
 			offset -= 2;
-			if (_u16 == (uint16_t) -1) {
+			if (_u16 == static_cast<uint16_t>(-1)) {
 				return "";
 			}
 			auto curpos = dbf.tellg();
-			dbf.ignore(offset + _u16);
+			dbf.ignore(static_cast<streamsize>(offset + _u16));
 			dbf.getline(&buf[0], 4096, '\0');
 			dbf.seekg(curpos);
 			return string(&buf[0]);
@@ -1255,7 +1261,7 @@ namespace prtty {
 			}
 		};
 
-		loadSequences((impl::SequenceStreamer *) &(result.back_tab), 394);
+		loadSequences(const_cast<impl::SequenceStreamer *>(&(result.back_tab)), 394);
 
 #		undef READ_U8
 #		undef READ_U16

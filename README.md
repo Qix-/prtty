@@ -1,5 +1,4 @@
 # prTTY
-
 Simplified Terminfo parser and a neat little wrapper/implementation of the terminfo "scripting" language.
 
 Aims to have a similar API as [zachariahreed/pyterminfo](https://github.com/zachariahreed/pyterminfo).
@@ -7,7 +6,6 @@ There are several of these out there but they all take shortcuts or don't help y
 values.
 
 ## Usage
-
 prTTY provides a `term` object that holds all of the boolean, numeric, and string&ast; "capabilities"
 for the given terminal as properties using their long names.
 
@@ -75,6 +73,24 @@ this terminal cannot overstrike.
 
 jello is tasty!
 ```
+
+## String Capabilities
+String capabilities in terminfo descriptions should normally never be used as-is. They are actually
+format strings (similar to [`printf`](https://www.lix.polytechnique.fr/~liberti/public/computing/prog/c/C/FUNCTIONS/format.html))
+that implement a stack-based set of operators (including if-then-else statements, arithmetic, etc).
+
+Even string values that do not take an argument can still reference a value stored by a previous
+argument, whether it be a flag or something else. While this is uncommon, complete portability therefore
+cannot rely on the assumption that zero-argument format strings are free of these parameters.
+
+Due to this, prTTY uses streamable types in lieu of `std::string`s. Streaming a string capability
+by itself executes the format string with all 9 arguments set to `int(0)`.
+
+You can also call string capabilities, like functions, to populate the arguments beforehand. This
+allows for things like `term.parm_right_cursor(5)` above to happen.
+
+Note that arguments are captured _by reference_, so you shouldn't store the result of a string capability
+call (e.g. don't do something like `auto moveRight5 = term.parm_right_cursor(5)`.
 
 # License
 Licensed under [CC0](LICENSE). Go crazy, but let me know if you use this; it's always appreciated.

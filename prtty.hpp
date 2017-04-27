@@ -92,8 +92,13 @@ namespace prtty {
 		};
 
 		struct Operation {
+			typedef vector<unique_ptr<Operation>>::const_iterator OpItr;
+
 			virtual ~Operation() = default;
-			virtual void operator()(ostream &stream, Data &data) = 0;
+			virtual void operator()(ostream &stream, Data &data, OpItr &citr) = 0;
+			virtual bool isControlOp() const {
+				return false;
+			}
 		};
 
 		namespace op {
@@ -103,7 +108,8 @@ namespace prtty {
 				StringLiteral(string literal) : literal(literal) {}
 				virtual ~StringLiteral() = default;
 
-				virtual void operator()(ostream &stream, Data &data) {
+				virtual void operator()(ostream &stream, Data &data, OpItr &citr) {
+					(void) citr;
 					(void) data;
 					stream << this->literal;
 				}
@@ -115,7 +121,8 @@ namespace prtty {
 				IntLiteral(int literal) : literal(literal) {}
 				virtual ~IntLiteral() = default;
 
-				virtual void operator()(ostream &stream, Data &data) {
+				virtual void operator()(ostream &stream, Data &data, OpItr &citr) {
+					(void) citr;
 					(void) data;
 					stream << this->literal;
 				}
@@ -127,7 +134,8 @@ namespace prtty {
 				CharLiteral(char literal) : literal(literal) {}
 				virtual ~CharLiteral() = default;
 
-				virtual void operator()(ostream &stream, Data &data) {
+				virtual void operator()(ostream &stream, Data &data, OpItr &citr) {
+					(void) citr;
 					(void) data;
 					stream << string(1, this->literal);
 				}
@@ -143,7 +151,8 @@ namespace prtty {
 				}
 				virtual ~PushArg() = default;
 
-				virtual void operator()(ostream &stream, Data &data) {
+				virtual void operator()(ostream &stream, Data &data, OpItr &citr) {
+					(void) citr;
 					(void) stream;
 					data.stk.push(data.params[this->arg]);
 				}
@@ -152,7 +161,8 @@ namespace prtty {
 			struct PushStrlen : public Operation {
 				virtual ~PushStrlen() = default;
 
-				virtual void operator()(ostream &stream, Data &data) {
+				virtual void operator()(ostream &stream, Data &data, OpItr &citr) {
+					(void) citr;
 					(void) stream;
 					int len = 0;
 					Any &v = data.stk.top();
@@ -178,7 +188,8 @@ namespace prtty {
 				PushLiteralInt(int literal) : literal(literal) {}
 				virtual ~PushLiteralInt() = default;
 
-				virtual void operator()(ostream &stream, Data &data) {
+				virtual void operator()(ostream &stream, Data &data, OpItr &citr) {
+					(void) citr;
 					(void) stream;
 					data.stk.push(this->literal);
 				}
@@ -194,7 +205,8 @@ namespace prtty {
 				}
 				virtual ~PopSetDynamic() = default;
 
-				virtual void operator()(ostream &stream, Data &data) {
+				virtual void operator()(ostream &stream, Data &data, OpItr &citr) {
+					(void) citr;
 					(void) stream;
 					data.dparm[this->arg] = data.stk.top();
 					data.stk.pop();
@@ -211,7 +223,8 @@ namespace prtty {
 				}
 				virtual ~PopSetStatic() = default;
 
-				virtual void operator()(ostream &stream, Data &data) {
+				virtual void operator()(ostream &stream, Data &data, OpItr &citr) {
+					(void) citr;
 					(void) stream;
 					data.sparm[this->arg] = data.stk.top();
 					data.stk.pop();
@@ -228,7 +241,8 @@ namespace prtty {
 				}
 				virtual ~PushDynamic() = default;
 
-				virtual void operator()(ostream &stream, Data &data) {
+				virtual void operator()(ostream &stream, Data &data, OpItr &citr) {
+					(void) citr;
 					(void) stream;
 					data.stk.push(data.dparm[this->arg]);
 				}
@@ -244,7 +258,8 @@ namespace prtty {
 				}
 				virtual ~PushStatic() = default;
 
-				virtual void operator()(ostream &stream, Data &data) {
+				virtual void operator()(ostream &stream, Data &data, OpItr &citr) {
+					(void) citr;
 					(void) stream;
 					data.stk.push(data.sparm[this->arg]);
 				}
@@ -253,7 +268,8 @@ namespace prtty {
 			struct PopWriteString : public Operation {
 				virtual ~PopWriteString() = default;
 
-				virtual void operator()(ostream &stream, Data &data) {
+				virtual void operator()(ostream &stream, Data &data, OpItr &citr) {
+					(void) citr;
 					Any &v = data.stk.top();
 					switch (v.type) {
 					case Any::Type::INT:
@@ -273,7 +289,8 @@ namespace prtty {
 			struct PopWriteInt : public Operation {
 				virtual ~PopWriteInt() = default;
 
-				virtual void operator()(ostream &stream, Data &data) {
+				virtual void operator()(ostream &stream, Data &data, OpItr &citr) {
+					(void) citr;
 					Any &v = data.stk.top();
 					switch (v.type) {
 					case Any::Type::INT:
@@ -293,9 +310,10 @@ namespace prtty {
 			struct PopWriteOct : public PopWriteInt {
 				virtual ~PopWriteOct() = default;
 
-				virtual void operator()(ostream &stream, Data &data) {
+				virtual void operator()(ostream &stream, Data &data, OpItr &citr) {
+					(void) citr;
 					stream << oct;
-					this->PopWriteInt::operator()(stream, data);
+					this->PopWriteInt::operator()(stream, data, citr);
 					stream << dec;
 				}
 			};
@@ -303,9 +321,10 @@ namespace prtty {
 			struct PopWriteHex : public PopWriteInt {
 				virtual ~PopWriteHex() = default;
 
-				virtual void operator()(ostream &stream, Data &data) {
+				virtual void operator()(ostream &stream, Data &data, OpItr &citr) {
+					(void) citr;
 					stream << hex;
-					this->PopWriteInt::operator()(stream, data);
+					this->PopWriteInt::operator()(stream, data, citr);
 					stream << dec;
 				}
 			};
@@ -313,9 +332,10 @@ namespace prtty {
 			struct PopWriteUHex : public PopWriteHex {
 				virtual ~PopWriteUHex() = default;
 
-				virtual void operator()(ostream &stream, Data &data) {
+				virtual void operator()(ostream &stream, Data &data, OpItr &citr) {
+					(void) citr;
 					stream << uppercase;
-					this->PopWriteHex::operator()(stream, data);
+					this->PopWriteHex::operator()(stream, data, citr);
 					stream << nouppercase;
 				}
 			};
@@ -323,7 +343,8 @@ namespace prtty {
 			struct PopWriteChar : public Operation {
 				virtual ~PopWriteChar() = default;
 
-				virtual void operator()(ostream &stream, Data &data) {
+				virtual void operator()(ostream &stream, Data &data, OpItr &citr) {
+					(void) citr;
 					Any &v = data.stk.top();
 					switch (v.type) {
 					case Any::Type::INT:
@@ -343,7 +364,8 @@ namespace prtty {
 			struct IncrementFirstTwo : public Operation {
 				virtual ~IncrementFirstTwo() = default;
 
-				virtual void operator()(ostream &stream, Data &data) {
+				virtual void operator()(ostream &stream, Data &data, OpItr &citr) {
+					(void) citr;
 					(void) stream;
 					if (data.params[0].type == Any::Type::INT) data.params[0].tint++;
 					if (data.params[1].type == Any::Type::INT) data.params[1].tint++;
@@ -363,8 +385,10 @@ namespace prtty {
 
 				ios::fmtflags f(stream.flags());
 				stream << dec;
-				for (const auto &op : this->ops) {
-					(*op)(stream, data);
+				Operation::OpItr citr = this->ops.cbegin();
+				Operation::OpItr cend = this->ops.cend();
+				for (; citr != cend; citr++) {
+					(**citr)(stream, data, citr);
 				}
 				stream.flags(f);
 			}

@@ -1049,7 +1049,7 @@ namespace prtty {
 
 			template <typename... Args>
 			SeqStreamDeferredCall operator()(Args... args) const {
-				return function<ostream&(ostream&)>([this, &args...](ostream &stream) -> ostream & {
+				return function<ostream&(ostream&)>([&, args...](ostream &stream) -> ostream & {
 					this->seq(this->data, stream, args...);
 					return stream;
 				});

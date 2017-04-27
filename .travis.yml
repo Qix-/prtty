@@ -22,10 +22,8 @@ install:
   - if [ "$CXX" == "clang++" ]; then sudo apt-get install --allow-unauthenticated -qq clang-3.4; fi
   - if [ "$CXX" == "clang++" ]; then export CXX="clang++-3.4"; fi
 
-after_install:
-  - $CXX --version
-
 before_script:
+  - $CXX --version
   - mkdir build
   - cd build
   - cmake ..

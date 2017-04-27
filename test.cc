@@ -21,5 +21,9 @@ int main() {
 	seq(data, cout, 10, 5, 6, 5); // should be "+35       !"
 	cout << endl;
 
+	seq = prtty::impl::Sequence::parse("%p1%.4s");
+	seq(data, cout, "hello world!"); // should be "hell"
+	cout << endl;
+
 	return 0;
 }

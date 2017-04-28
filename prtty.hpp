@@ -1027,6 +1027,13 @@ namespace prtty {
 			}
 		}
 
+		inline void toLE(uint16_t v) {
+			volatile uint32_t i = 0x01234567;
+			if ((*(reinterpret_cast<volatile uint8_t*>(&i))) == 0x01) {
+				v = static_cast<uint16_t>(((v >> 8) & 0xFF) | ((v & 0xFF) << 8));
+			}
+		}
+
 		void split(const string &s, char delim, vector<string> &elems) {
 			stringstream ss(s);
 			string item;
@@ -1148,7 +1155,7 @@ namespace prtty {
 		uint16_t _u16;
 
 #		define READ_U8() dbf.read(reinterpret_cast<char *>(&_u8), 1)
-#		define READ_U16() dbf.read(reinterpret_cast<char *>(&_u16), 2)
+#		define READ_U16() dbf.read(reinterpret_cast<char *>(&_u16), 2); impl::toLE(_u16)
 
 		// magic number
 		READ_U16();

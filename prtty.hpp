@@ -1186,7 +1186,7 @@ namespace prtty {
 #		undef PRTTY_FIRST_INTEGER
 		for (size_t i = 0; i < numCount; i++) {
 			READ_U16();
-			ints[i] = static_cast<bool>(_u16);
+			ints[i] = static_cast<int>(_u16);
 		}
 
 		char buf[4096];

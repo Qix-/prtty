@@ -50,7 +50,7 @@ int main() {
 	//
 	// the following outputs "jello is tasty!"
 	cout << "hello";
-	cout << term.column_address(); // arguments default to int(0)
+	cout << term.column_address; // arguments default to int(0)
 	cout << "j";
 	cout << term.parm_right_cursor(5);
 	cout << "is tasty!";

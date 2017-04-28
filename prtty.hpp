@@ -78,8 +78,10 @@ namespace prtty {
 				case Type::CHAR: return "'" + string(1, this->tchar) + "'";
 				}
 
+#				ifndef __clang__
 				// mainly to make GCC happy.
 				throw prtty::PrttyError("invalid type; cannot convert to string");
+#				endif
 			}
 		};
 
@@ -929,14 +931,14 @@ namespace prtty {
 							seq.ops.push_back(mkunique<op::BitNegate>());
 							break;
 						default:
-#ifdef __clang__
-#							pragma clang diagnostic push
-#							pragma clang diagnostic ignored "-Wunreachable-code"
-#endif
+#							ifdef __clang__
+#								pragma clang diagnostic push
+#								pragma clang diagnostic ignored "-Wunreachable-code"
+#							endif
 							throw prtty::PrttyError("invalid escape: %" + (c == 0 ? string("<EOF>") : string(1, c)));
-#ifdef __clang__
-#							pragma clang diagnostic pop
-#endif
+#							ifdef __clang__
+#								pragma clang diagnostic pop
+#							endif
 						}
 
 						goto afterFieldParse;

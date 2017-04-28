@@ -77,6 +77,9 @@ namespace prtty {
 				case Type::INT: return to_string(this->tint);
 				case Type::CHAR: return "'" + string(1, this->tchar) + "'";
 				}
+
+				// mainly to make GCC happy.
+				throw prtty::PrttyError("invalid type; cannot convert to string");
 			}
 		};
 

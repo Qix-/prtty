@@ -1141,9 +1141,10 @@ namespace prtty {
 
 		uint8_t _u8;
 		uint16_t _u16;
+		size_t nread = 0;
 
-#		define READ_U8() dbf.read(reinterpret_cast<char *>(&_u8), 1)
-#		define READ_U16() dbf.read(reinterpret_cast<char *>(&_u16), 2)
+#		define READ_U8() dbf.read(reinterpret_cast<char *>(&_u8), 1); nread += 1
+#		define READ_U16() dbf.read(reinterpret_cast<char *>(&_u16), 2); nread += 2
 
 		// magic number
 		READ_U16();

@@ -1,6 +1,10 @@
 # prTTY
 Simplified Terminfo parser and a neat little wrapper/implementation of the terminfo "scripting" language.
 
+| **Travis**   | [![Travis](https://img.shields.io/travis/qix-/prtty.svg?style=flat-square)](https://travis-ci.org/qix-/prtty/builds)               |
+|--------------|----------------------------------------------------------------------------------------------------------------------------------------|
+| **CircleCI** | [![CircleCI](https://img.shields.io/circleci/project/github/qix-/prtty.svg?style=flat-square)](https://circleci.com/gh/qix-/prtty) |
+
 Aims to have a similar API as [zachariahreed/pyterminfo](https://github.com/zachariahreed/pyterminfo).
 There are several of these out there but they all take shortcuts or don't help you actually _use_ the
 values.

@@ -1097,88 +1097,24 @@ namespace prtty {
 		const string id;
 		const vector<string> names;
 
-		bool auto_left_margin;
-		bool auto_right_margin;
-		bool no_esc_ctlc;
-		bool ceol_standout_glitch;
-		bool eat_newline_glitch;
-		bool erase_overstrike;
-		bool generic_type;
-		bool hard_copy;
-		bool has_meta_key;
-		bool has_status_line;
-		bool insert_null_glitch;
-		bool memory_above;
-		bool memory_below;
-		bool move_insert_mode;
-		bool move_standout_mode;
-		bool over_strike;
-		bool status_line_esc_ok;
-		bool dest_tabs_magic_smso;
-		bool tilde_glitch;
-		bool transparent_underline;
-		bool xon_xoff;
-		bool needs_xon_xoff;
-		bool prtr_silent;
-		bool hard_cursor;
-		bool non_rev_rmcup;
-		bool no_pad_char;
-		bool non_dest_scroll_region;
-		bool can_change;
-		bool back_color_erase;
-		bool hue_lightness_saturation;
-		bool col_addr_glitch;
-		bool cr_cancels_micro_mode;
-		bool has_print_wheel;
-		bool row_addr_glitch;
-		bool semi_auto_right_margin;
-		bool cpi_changes_res;
-		bool lpi_changes_res;
+#		define PRTTY_DO_BOOLEAN(name) const bool name;
+#		include "./prtty-booleans.inc"
 
-		int columns;
-		int init_tabs;
-		int lines;
-		int lines_of_memory;
-		int magic_cookie_glitch;
-		int padding_baud_rate;
-		int virtual_terminal;
-		int width_status_line;
-		int num_labels;
-		int label_height;
-		int label_width;
-		int max_attributes;
-		int maximum_windows;
-		int max_colors;
-		int max_pairs;
-		int no_color_video;
-		int buffer_capacity;
-		int dot_vert_spacing;
-		int dot_horz_spacing;
-		int max_micro_address;
-		int max_micro_jump;
-		int micro_col_size;
-		int micro_line_size;
-		int number_of_pins;
-		int output_res_char;
-		int output_res_line;
-		int output_res_horz_inch;
-		int output_res_vert_inch;
-		int print_rate;
-		int wide_char_size;
-		int buttons;
-		int bit_image_entwining;
-		int bit_image_type;
+#		define PRTTY_DO_INTEGER(name) const int name;
+#		include "./prtty-integers.inc"
 
 #		define PRTTY_DO_STRING(name) const impl::SequenceStreamer name;
 #		include "./prtty-strings.inc"
-#		undef PRTTY_DO_STRING
 
 		term(string id, vector<string> &names)
 				: id(id)
 				, names(names)
+#		define PRTTY_DO_BOOLEAN(name) , name(false)
+#		include "./prtty-booleans.inc"
+#		define PRTTY_DO_INTEGER(name) , name(0)
+#		include "./prtty-integers.inc"
 #		define PRTTY_DO_STRING(name) , name(this->data)
 #		include "./prtty-strings.inc"
-#		undef PRTTY_DO_STRING
 		{}
 
 	private:
@@ -1234,7 +1170,8 @@ namespace prtty {
 
 		term result(termname, names);
 
-		bool *bools = reinterpret_cast<bool *>(&(result.auto_left_margin));
+		bool *bools = const_cast<bool *>(&(result.PRTTY_FIRST_BOOLEAN));
+#		undef PRTTY_FIRST_BOOLEAN
 		for (size_t i = 0; i < boolSize; i++) {
 			READ_U8();
 			bools[i] = static_cast<bool>(_u8);
@@ -1245,7 +1182,8 @@ namespace prtty {
 			dbf.ignore(1);
 		}
 
-		int *ints = reinterpret_cast<int *>(&(result.columns));
+		int *ints = const_cast<int *>(&(result.PRTTY_FIRST_INTEGER));
+#		undef PRTTY_FIRST_INTEGER
 		for (size_t i = 0; i < numCount; i++) {
 			READ_U16();
 			ints[i] = static_cast<bool>(_u16);
@@ -1272,7 +1210,8 @@ namespace prtty {
 			}
 		};
 
-		loadSequences(const_cast<impl::SequenceStreamer *>(&(result.back_tab)), 394);
+		loadSequences(const_cast<impl::SequenceStreamer *>(&(result.PRTTY_FIRST_STRING)), 394);
+#		undef PRTTY_FIRST_STRING
 
 #		undef READ_U8
 #		undef READ_U16

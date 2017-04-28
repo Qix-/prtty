@@ -16,6 +16,8 @@ You can also find it in most distributions' man page for `terminfo(5)`.
 
 ```c++
 #include <iostream>
+
+#define PRTTY_MAIN // define this in exactly one translation unit
 #include "prtty.hpp"
 
 using namespace std;

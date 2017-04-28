@@ -1,3 +1,4 @@
+#define PRTTY_MAIN
 #include "./prtty.hpp" // include first so as to not shadow errors with missing header files
 
 #include <iostream>

@@ -1133,7 +1133,9 @@ namespace prtty {
 		impl::Data data;
 	};
 
-	term get(string termname, string basePath) {
+	term get(string termname, string basePath)
+#	ifdef PRTTY_MAIN
+	{
 		ifstream dbf;
 		string dbPath = basePath + "/" + string(1, termname[0]) + "/" + termname;
 		dbf.open(dbPath, ios::binary);
@@ -1233,16 +1235,29 @@ namespace prtty {
 #		undef READ_U16
 		return result;
 	}
+#	else
+	;
+#	endif
 
-	term get(string termname) {
+	term get(string termname)
+#	ifdef PRTTY_MAIN
+	{
 		char *termdb = getenv("TERMINFO");
 		return get(termname, termdb ? termdb : "/usr/share/terminfo");
 	}
+#	else
+	;
+#	endif
 
-	term get() {
+	term get()
+#	ifdef PRTTY_MAIN
+	{
 		char *termname = getenv("TERM");
 		return get(termname ? termname : "dumb");
 	}
+#	else
+	;
+#	endif
 
 }
 

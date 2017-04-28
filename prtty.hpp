@@ -926,10 +926,14 @@ namespace prtty {
 							seq.ops.push_back(mkunique<op::BitNegate>());
 							break;
 						default:
+#ifdef __clang__
 #							pragma clang diagnostic push
 #							pragma clang diagnostic ignored "-Wunreachable-code"
+#endif
 							throw prtty::PrttyError("invalid escape: %" + (c == 0 ? string("<EOF>") : string(1, c)));
+#ifdef __clang__
 #							pragma clang diagnostic pop
+#endif
 						}
 
 						goto afterFieldParse;

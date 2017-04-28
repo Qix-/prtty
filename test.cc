@@ -2,6 +2,7 @@
 #include "./prtty.hpp" // include first so as to not shadow errors with missing header files
 
 #include <iostream>
+#include <sstream>
 
 using namespace std;
 
@@ -29,11 +30,20 @@ int main(int argc, char **argv) {
 
 	cout << endl;
 	cout << "hello";
-	cout << term.column_address(0); // arguments default to int(0)
+	cout << term.column_address; // arguments default to int(0)
 	cout << "j";
 	cout << term.parm_right_cursor(5);
 	cout << "is tasty!";
 	cout << endl;
+
+	stringstream ss;
+	ss << "hello";
+	ss << term.column_address; // arguments default to int(0)
+	ss << "j";
+	ss << term.parm_right_cursor(5);
+	ss << "is really, really tasty!";
+	ss << endl;
+	cout << ss.str();
 
 	return 0;
 }

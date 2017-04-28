@@ -1,8 +1,8 @@
 version: 2
 
 jobs:
-  working_directory: ~/prtty
   build:
+    working_directory: ~/prtty
     docker:
       - image: gcc@4.9.4
     steps:

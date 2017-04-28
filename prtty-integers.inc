@@ -42,6 +42,8 @@ PRTTY_DO_INTEGER(buttons)
 PRTTY_DO_INTEGER(bit_image_entwining)
 PRTTY_DO_INTEGER(bit_image_type)
 
+#define PRTTY_NUM_INTEGERS 32
+
 #undef PRTTY_DO_INTEGER
 #undef PRTTY_DO_FIRST_INTEGER
 #undef PRTTY_DO_LAST_INTEGER

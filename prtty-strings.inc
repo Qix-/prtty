@@ -403,6 +403,8 @@ PRTTY_DO_STRING(enter_vertical_hl_mode)
 PRTTY_DO_STRING(set_a_attributes)
 PRTTY_DO_LAST_STRING(set_pglen_inch)
 
+#define PRTTY_NUM_STRINGS 394
+
 #undef PRTTY_DO_STRING
 #undef PRTTY_DO_FIRST_STRING
 #undef PRTTY_DO_LAST_STRING

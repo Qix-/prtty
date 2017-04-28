@@ -46,6 +46,8 @@ PRTTY_DO_BOOLEAN(semi_auto_right_margin)
 PRTTY_DO_BOOLEAN(cpi_changes_res)
 PRTTY_DO_LAST_BOOLEAN(lpi_changes_res)
 
+#define PRTTY_NUM_BOOLEANS 37
+
 #undef PRTTY_DO_BOOLEAN
 #undef PRTTY_DO_FIRST_BOOLEAN
 #undef PRTTY_DO_LAST_BOOLEAN

@@ -1173,7 +1173,7 @@ namespace prtty {
 
 		bool *bools = const_cast<bool *>(&(result.PRTTY_FIRST_BOOLEAN));
 #		undef PRTTY_FIRST_BOOLEAN
-		for (size_t i = 0; i < boolSize; i++) {
+		for (size_t i = 0; i < PRTTY_NUM_BOOLEANS; i++) {
 			READ_U8();
 			bools[i] = static_cast<bool>(_u8);
 		}
@@ -1182,17 +1182,20 @@ namespace prtty {
 		if ((dbf.tellg() % 2) == 1) {
 			dbf.ignore(1);
 		}
+#		undef PRTTY_NUM_BOOLEANS
 
 		int *ints = const_cast<int *>(&(result.PRTTY_FIRST_INTEGER));
 #		undef PRTTY_FIRST_INTEGER
-		for (size_t i = 0; i < numCount; i++) {
+		for (size_t i = 0; i < PRTTY_NUM_INTEGERS; i++) {
 			READ_U16();
 			ints[i] = static_cast<int>(_u16);
 		}
 
+#		undef PRTTY_NUM_INTEGERS
+
 		char buf[4096];
 		size_t offset = offCount * 2;
-		auto loadString = [&dbf, &offset, &_u16, &buf]() -> string {
+		auto loadString = [&]() -> string {
 			READ_U16();
 			offset -= 2;
 			if (_u16 == static_cast<uint16_t>(-1)) {
@@ -1205,14 +1208,12 @@ namespace prtty {
 			return string(&buf[0]);
 		};
 
-		auto loadSequences = [&](impl::SequenceStreamer *start, size_t num) {
-			for (size_t i = 0; i < num; i++) {
-				start[i] = loadString();
-			}
-		};
-
-		loadSequences(const_cast<impl::SequenceStreamer *>(&(result.PRTTY_FIRST_STRING)), 394);
+		impl::SequenceStreamer *strings = const_cast<impl::SequenceStreamer *>(&(result.PRTTY_FIRST_STRING));
+		for (size_t i = 0; i < PRTTY_NUM_STRINGS; i++) {
+			strings[i] = loadString();
+		}
 #		undef PRTTY_FIRST_STRING
+#		undef PRTTY_NUM_STRINGS
 
 #		undef READ_U8
 #		undef READ_U16

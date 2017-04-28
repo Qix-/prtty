@@ -1064,16 +1064,16 @@ namespace prtty {
 
 		public:
 			SequenceStreamer(Data &data)
-					: isset(false)
+					: isSet(false)
 					, data(data) {
 			}
 
 			explicit operator bool() const noexcept(true) {
-				return this->isset;
+				return this->isSet;
 			}
 
 			bool operator !() const noexcept(true) {
-				return !this->isset;
+				return !this->isSet;
 			}
 
 			template <typename... Args>
@@ -1096,10 +1096,10 @@ namespace prtty {
 				}
 
 				this->seq = Sequence::parse(seqstr);
-				this->isset = true;
+				this->isSet = true;
 			}
 
-			bool isset;
+			bool isSet;
 			Data &data;
 			Sequence seq;
 		};

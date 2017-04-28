@@ -6,6 +6,11 @@
 	Please note that this library does NOT support
 	delays (millisecond delays). Please, stop using
 	outdated technology and let's move on.
+
+	This library assumes compiled files are the
+	ncurses extended compiled formats. If they're not,
+	please stop using outdated technology and let's
+	move on.
 */
 
 #include <cstdint>
@@ -1141,10 +1146,9 @@ namespace prtty {
 
 		uint8_t _u8;
 		uint16_t _u16;
-		size_t nread = 0;
 
-#		define READ_U8() dbf.read(reinterpret_cast<char *>(&_u8), 1); nread += 1
-#		define READ_U16() dbf.read(reinterpret_cast<char *>(&_u16), 2); nread += 2
+#		define READ_U8() dbf.read(reinterpret_cast<char *>(&_u8), 1)
+#		define READ_U16() dbf.read(reinterpret_cast<char *>(&_u16), 2)
 
 		// magic number
 		READ_U16();
@@ -1160,8 +1164,7 @@ namespace prtty {
 		size_t numCount = _u16;
 		READ_U16();
 		size_t offCount = _u16;
-		READ_U16();
-		// size_t strSize = _u16;
+		dbf.ignore(2); // string (offset) count
 
 		vector<string> names;
 
@@ -1173,24 +1176,28 @@ namespace prtty {
 
 		bool *bools = const_cast<bool *>(&(result.PRTTY_FIRST_BOOLEAN));
 #		undef PRTTY_FIRST_BOOLEAN
-		for (size_t i = 0; i < PRTTY_NUM_BOOLEANS; i++) {
+		for (size_t i = 0; i < boolSize; i++) {
 			READ_U8();
 			bools[i] = static_cast<bool>(_u8);
 		}
 
-		// align to short
-		if ((dbf.tellg() % 2) == 1) {
-			dbf.ignore(1);
+		// advance
+		if (boolSize > PRTTY_NUM_BOOLEANS) {
+			dbf.ignore(static_cast<streamsize>(boolSize - PRTTY_NUM_BOOLEANS));
 		}
 #		undef PRTTY_NUM_BOOLEANS
 
 		int *ints = const_cast<int *>(&(result.PRTTY_FIRST_INTEGER));
 #		undef PRTTY_FIRST_INTEGER
-		for (size_t i = 0; i < PRTTY_NUM_INTEGERS; i++) {
+		for (size_t i = 0; i < numCount; i++) {
 			READ_U16();
 			ints[i] = static_cast<int>(_u16);
 		}
 
+		// advance
+		if (numCount > PRTTY_NUM_INTEGERS) {
+			dbf.ignore(static_cast<streamsize>((numCount - PRTTY_NUM_INTEGERS) * 2));
+		}
 #		undef PRTTY_NUM_INTEGERS
 
 		char buf[4096];

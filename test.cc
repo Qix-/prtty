@@ -38,7 +38,11 @@ int main(int argc, char **argv) {
 
 	stringstream ss;
 	ss << "hello";
-	ss << term.column_address; // arguments default to int(0)
+
+	// as an added test, make sure it's convertible to string
+	string topleft = term.column_address; // arguments default to 0
+	ss << topleft;
+
 	ss << "j";
 	ss << term.parm_right_cursor(5);
 	ss << "is really, really tasty!";

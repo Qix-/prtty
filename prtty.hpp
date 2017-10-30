@@ -1050,6 +1050,12 @@ namespace prtty {
 			public:
 				SeqStreamDeferredCall(const SeqStreamDeferredCall &other) = default;
 
+				operator std::string() const noexcept(true) {
+					std::stringstream ss;
+					ss << *this;
+					return ss.str();
+				}
+
 			private:
 				SeqStreamDeferredCall(function<ostream&(ostream&)> callback)
 						: callback(callback) {
@@ -1070,6 +1076,12 @@ namespace prtty {
 
 			explicit operator bool() const noexcept(true) {
 				return this->isSet;
+			}
+
+			operator std::string() const noexcept(true) {
+				std::stringstream ss;
+				ss << *this;
+				return ss.str();
 			}
 
 			bool operator !() const noexcept(true) {
